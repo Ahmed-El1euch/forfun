@@ -1,0 +1,14 @@
+# Build artifacts
+/build/
+
+# Compiled objects and binaries
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.pdb
+
+

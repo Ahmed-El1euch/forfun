@@ -1,9 +1,13 @@
-add_library(fungcc_core INTERFACE)
+add_library(fungcc_core
+    frontend/lexer.c
+)
 
 target_include_directories(fungcc_core
-    INTERFACE
+    PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
+
+target_compile_features(fungcc_core PRIVATE c_std_17)
 
 add_executable(fungcc_driver
     driver/main.c

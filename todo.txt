@@ -1,7 +1,7 @@
 [x] Bootstrapping
   [x] Configure CMake project layout with src/, include/, tests/ directories
 [ ] Frontend
-  [ ] Define token enum and minimal lexer that recognizes keywords, identifiers, literals
+  [x] Define token enum and minimal lexer that recognizes keywords, identifiers, literals
   [ ] Add unit tests for lexer covering whitespace, comments, number literals
   [ ] Implement recursive-descent parser for declarations and function definitions
 [ ] Backend

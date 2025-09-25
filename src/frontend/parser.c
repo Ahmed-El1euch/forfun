@@ -74,9 +74,42 @@ static AstNode *parse_primary(Parser *parser) {
     return NULL;
 }
 
+static AstNode *parse_expression(Parser *parser) {
+    AstNode *left = parse_primary(parser);
+    if (!left) {
+        return NULL;
+    }
+
+    while (parser->current.kind == TOKEN_PLUS || parser->current.kind == TOKEN_MINUS) {
+        Token op = parser->current;
+        parser_advance(parser);
+
+        AstNode *right = parse_primary(parser);
+        if (!right) {
+            ast_free(left);
+            return NULL;
+        }
+
+        AstNode *binary = ast_new_node(AST_BINARY_EXPR);
+        if (!binary) {
+            parser->status = PARSER_ERROR;
+            ast_free(left);
+            ast_free(right);
+            return NULL;
+        }
+
+        binary->value.binary_expr.left = left;
+        binary->value.binary_expr.right = right;
+        binary->value.binary_expr.op = (op.kind == TOKEN_PLUS) ? AST_BIN_ADD : AST_BIN_SUB;
+        left = binary;
+    }
+
+    return left;
+}
+
 static AstNode *parse_return_statement(Parser *parser) {
     parser_expect(parser, TOKEN_KW_RETURN, "'return'");
-    AstNode *expr = parse_primary(parser);
+    AstNode *expr = parse_expression(parser);
     parser_expect(parser, TOKEN_SEMICOLON, "';'");
     if (parser->status == PARSER_ERROR) {
         ast_free(expr);

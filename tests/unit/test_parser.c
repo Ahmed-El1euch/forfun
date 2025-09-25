@@ -118,6 +118,28 @@ static int test_parse_failure_on_missing_expression(void) {
     return EXIT_SUCCESS;
 }
 
+static int test_parse_binary_expression(void) {
+    const char *source = "int main() { return 20 + 22 - 1; }";
+
+    Parser parser;
+    parser_init(&parser, source, strlen(source));
+    AstNode *unit = parser_parse_translation_unit(&parser);
+
+    ASSERT_TRUE(parser_status(&parser) == PARSER_OK, "Parser should succeed");
+    AstNode *func = unit->value.translation_unit.functions[0];
+    AstNode *ret = func->value.function_decl.body;
+    AstNode *expr = ret->value.return_stmt.expression;
+
+    ASSERT_TRUE(expr->kind == AST_BINARY_EXPR, "Top-level expression should be binary");
+    AstNode *left = expr->value.binary_expr.left;
+    AstNode *right = expr->value.binary_expr.right;
+    ASSERT_TRUE(left->kind == AST_BINARY_EXPR, "Left branch should be binary for chained ops");
+    ASSERT_TRUE(right->kind == AST_NUMBER_LITERAL, "Right branch should be number");
+
+    ast_free(unit);
+    return EXIT_SUCCESS;
+}
+
 static int test_parse_failure_on_missing_rbrace(void) {
     const char *source = "int main() { return 0;"; // missing closing brace
 
@@ -156,6 +178,7 @@ int main(void) {
         {"parse_failure_on_missing_expression", test_parse_failure_on_missing_expression},
         {"parse_failure_on_missing_rbrace", test_parse_failure_on_missing_rbrace},
         {"parse_failure_on_unexpected_keyword", test_parse_failure_on_unexpected_keyword},
+        {"parse_binary_expression", test_parse_binary_expression},
     };
 
     size_t count = sizeof(tests) / sizeof(tests[0]);

@@ -24,3 +24,6 @@ Track each completed step for fungcc so the history of decisions stays transpare
 - Implemented minimal x86-64 code generator for literal return functions and integrated it into the driver demo; generated assembly with `./build/src/fungcc_driver`.
 - Added backend unit coverage validating emitted assembly and failure paths; ran `cmake --build build` and `ctest --test-dir build --output-on-failure`.
 - Assembled generated assembly via `cc build/fungcc_output.s -o build/fungcc_output` and confirmed exit status 42.
+- Expanded parser to support chained addition/subtraction expressions and ensured AST captures binary nodes.
+- Broadened backend to emit identifier loads and arithmetic sequences; verified via `ctest --test-dir build --output-on-failure` and driver/assembly run.
+- Captured current compiler stages, data structures, and future extensions in `docs/architecture.md`.

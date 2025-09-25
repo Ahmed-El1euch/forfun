@@ -23,6 +23,10 @@ void ast_free(AstNode *node) {
     case AST_NUMBER_LITERAL:
     case AST_IDENTIFIER:
         break;
+    case AST_BINARY_EXPR:
+        ast_free(node->value.binary_expr.left);
+        ast_free(node->value.binary_expr.right);
+        break;
     }
 
     free(node);

@@ -61,7 +61,7 @@ static int test_codegen_return_literal(void) {
     return EXIT_SUCCESS;
 }
 
-static int test_codegen_return_identifier_fails(void) {
+static int test_codegen_return_identifier(void) {
     const char *source = "int foo() { return bar; }";
     Parser parser;
     parser_init(&parser, source, strlen(source));
@@ -71,8 +71,33 @@ static int test_codegen_return_identifier_fails(void) {
     FILE *tmp = tmpfile();
     ASSERT_TRUE(tmp != NULL, "tmpfile should succeed");
 
-    int status = codegen_emit_translation_unit(unit, tmp);
-    ASSERT_TRUE(status != 0, "Codegen should fail for identifiers");
+    ASSERT_TRUE(codegen_emit_translation_unit(unit, tmp) == 0, "Codegen should succeed");
+
+    char buffer[512];
+    ASSERT_TRUE(read_file_to_buffer(tmp, buffer, sizeof(buffer)) > 0, "Expected output");
+    ASSERT_TRUE(strstr(buffer, "mov bar(%rip), %eax") != NULL, "Expected identifier load");
+
+    fclose(tmp);
+    ast_free(unit);
+    return EXIT_SUCCESS;
+}
+
+static int test_codegen_binary_expression(void) {
+    const char *source = "int main() { return 20 + 22 - 2; }";
+    Parser parser;
+    parser_init(&parser, source, strlen(source));
+    AstNode *unit = parser_parse_translation_unit(&parser);
+    ASSERT_TRUE(parser_status(&parser) == PARSER_OK, "Parser should succeed");
+
+    FILE *tmp = tmpfile();
+    ASSERT_TRUE(tmp != NULL, "tmpfile should succeed");
+    ASSERT_TRUE(codegen_emit_translation_unit(unit, tmp) == 0, "Codegen should succeed");
+
+    char buffer[1024];
+    ASSERT_TRUE(read_file_to_buffer(tmp, buffer, sizeof(buffer)) > 0, "Expected output");
+    ASSERT_TRUE(strstr(buffer, "push %rax") != NULL, "Push missing");
+    ASSERT_TRUE(strstr(buffer, "add %edx, %eax") != NULL, "Add instruction missing");
+    ASSERT_TRUE(strstr(buffer, "sub %edx, %eax") != NULL, "Sub instruction missing");
 
     fclose(tmp);
     ast_free(unit);
@@ -86,7 +111,8 @@ int main(void) {
         test_fn fn;
     } tests[] = {
         {"codegen_return_literal", test_codegen_return_literal},
-        {"codegen_return_identifier_fails", test_codegen_return_identifier_fails},
+        {"codegen_return_identifier", test_codegen_return_identifier},
+        {"codegen_binary_expression", test_codegen_binary_expression},
     };
 
     size_t count = sizeof(tests) / sizeof(tests[0]);

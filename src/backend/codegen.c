@@ -15,6 +15,8 @@ static int copy_lexeme(const char *lexeme, size_t length, char **out_copy) {
     return 0;
 }
 
+static int emit_expression(const AstNode *node, FILE *out);
+
 static int emit_number_literal(const AstNode *node, FILE *out) {
     char *literal = NULL;
     if (copy_lexeme(node->value.number_literal.lexeme, node->value.number_literal.length, &literal) != 0) {
@@ -33,23 +35,72 @@ static int emit_number_literal(const AstNode *node, FILE *out) {
     return (result < 0) ? -1 : 0;
 }
 
-static int emit_return_stmt(const AstNode *node, FILE *out) {
-    const AstNode *expr = node->value.return_stmt.expression;
-    if (!expr) {
+static int emit_identifier(const AstNode *node, FILE *out) {
+    char *name = NULL;
+    if (copy_lexeme(node->value.identifier.name, node->value.identifier.length, &name) != 0) {
         return -1;
     }
 
-    switch (expr->kind) {
-    case AST_NUMBER_LITERAL:
-        if (emit_number_literal(expr, out) != 0) {
-            return -1;
-        }
-        break;
-    default:
+    int result = fprintf(out, "    mov %s(%%rip), %%eax\n", name);
+    free(name);
+    return (result < 0) ? -1 : 0;
+}
+
+static int emit_binary_expr(const AstNode *node, FILE *out) {
+    if (emit_expression(node->value.binary_expr.left, out) != 0) {
+        return -1;
+    }
+
+    if (fprintf(out, "    push %%rax\n") < 0) {
+        return -1;
+    }
+
+    if (emit_expression(node->value.binary_expr.right, out) != 0) {
+        return -1;
+    }
+
+    if (fprintf(out, "    pop %%rcx\n") < 0) {
+        return -1;
+    }
+
+    if (fprintf(out, "    mov %%eax, %%edx\n") < 0) {
+        return -1;
+    }
+
+    if (fprintf(out, "    mov %%ecx, %%eax\n") < 0) {
+        return -1;
+    }
+
+    const char *op_instr = (node->value.binary_expr.op == AST_BIN_ADD) ? "add" : "sub";
+    if (fprintf(out, "    %s %%edx, %%eax\n", op_instr) < 0) {
         return -1;
     }
 
     return 0;
+}
+
+static int emit_expression(const AstNode *node, FILE *out) {
+    if (!node) {
+        return -1;
+    }
+
+    switch (node->kind) {
+    case AST_NUMBER_LITERAL:
+        return emit_number_literal(node, out);
+    case AST_IDENTIFIER:
+        return emit_identifier(node, out);
+    case AST_BINARY_EXPR:
+        return emit_binary_expr(node, out);
+    default:
+        break;
+    }
+
+    return -1;
+}
+
+static int emit_return_stmt(const AstNode *node, FILE *out) {
+    const AstNode *expr = node->value.return_stmt.expression;
+    return emit_expression(expr, out);
 }
 
 static int emit_function(const AstNode *node, FILE *out) {

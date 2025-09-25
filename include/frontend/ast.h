@@ -12,7 +12,8 @@ typedef enum AstNodeKind {
     AST_FUNCTION_DECL,
     AST_RETURN_STMT,
     AST_NUMBER_LITERAL,
-    AST_IDENTIFIER
+    AST_IDENTIFIER,
+    AST_BINARY_EXPR
 } AstNodeKind;
 
 typedef struct AstNode AstNode;
@@ -30,6 +31,17 @@ typedef struct AstNumberLiteral {
 typedef struct AstReturnStmt {
     AstNode *expression;
 } AstReturnStmt;
+
+typedef enum AstBinaryOp {
+    AST_BIN_ADD = 0,
+    AST_BIN_SUB
+} AstBinaryOp;
+
+typedef struct AstBinaryExpr {
+    AstBinaryOp op;
+    AstNode *left;
+    AstNode *right;
+} AstBinaryExpr;
 
 typedef struct AstFunctionDecl {
     AstIdentifier name;
@@ -49,6 +61,7 @@ typedef struct AstNode {
         AstReturnStmt return_stmt;
         AstNumberLiteral number_literal;
         AstIdentifier identifier;
+        AstBinaryExpr binary_expr;
     } value;
 } AstNode;
 

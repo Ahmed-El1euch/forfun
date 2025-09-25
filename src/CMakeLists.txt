@@ -1,5 +1,8 @@
 add_library(fungcc_core
     frontend/lexer.c
+    frontend/parser.c
+    frontend/ast.c
+    backend/codegen.c
 )
 
 target_include_directories(fungcc_core

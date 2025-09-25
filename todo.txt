@@ -2,9 +2,9 @@
   [x] Configure CMake project layout with src/, include/, tests/ directories
 [ ] Frontend
   [x] Define token enum and minimal lexer that recognizes keywords, identifiers, literals
-  [ ] Add unit tests for lexer covering whitespace, comments, number literals
-  [ ] Implement recursive-descent parser for declarations and function definitions
+  [x] Add unit tests for lexer covering whitespace, comments, number literals
+  [x] Implement recursive-descent parser for declarations and function definitions
 [ ] Backend
-  [ ] Generate simple x86-64 assembly for return statements and compile sample program
+  [x] Generate simple x86-64 assembly for return statements and compile sample program
 [ ] Documentation
   [ ] Document compiler pipeline in docs/architecture.md and share open questions

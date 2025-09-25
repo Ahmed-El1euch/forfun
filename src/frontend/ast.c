@@ -23,9 +23,24 @@ void ast_free(AstNode *node) {
     case AST_NUMBER_LITERAL:
     case AST_IDENTIFIER:
         break;
+    case AST_UNARY_EXPR:
+        ast_free(node->value.unary_expr.operand);
+        break;
     case AST_BINARY_EXPR:
         ast_free(node->value.binary_expr.left);
         ast_free(node->value.binary_expr.right);
+        break;
+    case AST_BLOCK:
+        for (size_t i = 0; i < node->value.block.statement_count; ++i) {
+            ast_free(node->value.block.statements[i]);
+        }
+        free(node->value.block.statements);
+        break;
+    case AST_VAR_DECL:
+        ast_free(node->value.var_decl.initializer);
+        break;
+    case AST_ASSIGNMENT:
+        ast_free(node->value.assignment.value);
         break;
     }
 

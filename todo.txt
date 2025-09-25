@@ -1,10 +1,39 @@
 [x] Bootstrapping
   [x] Configure CMake project layout with src/, include/, tests/ directories
+
 [ ] Frontend
   [x] Define token enum and minimal lexer that recognizes keywords, identifiers, literals
   [x] Add unit tests for lexer covering whitespace, comments, number literals
   [x] Implement recursive-descent parser for declarations and function definitions
+  [x] Parse local variable declarations and assignments
+    [ ] Extend lexer with '=' compound operators if needed
+    [x] Add AST nodes for variable declarations
+    [x] Emit parser tests for local declaration/assignment syntax errors
+  [ ] Support parameter lists and argument parsing
+    [ ] Accept function parameter declarations
+    [ ] Parse call expressions and provide AST coverage
+  [ ] Broaden expression grammar
+    [ ] Implement precedence climbing (*/ before +-)
+    [x] Handle parentheses and unary operators
+
 [ ] Backend
   [x] Generate simple x86-64 assembly for return statements and compile sample program
-[ ] Documentation
+  [x] Support identifier loads and chained addition/subtraction
+  [x] Introduce stack frame management for local variables
+    [x] Lower local declarations to stack slots
+    [x] Emit loads/stores for identifiers pointing to locals
+  [ ] Emit function prologue/epilogue for parameter passing
+    [ ] Map first parameters to registers (System V AMD64)
+    [ ] Handle stack spills for extra parameters
+  [ ] Add multiplication/division operations
+    [ ] Lower binary expr to use `imul`/`idiv`
+
+[ ] Tooling & Docs
   [x] Document compiler pipeline in docs/architecture.md and share open questions
+  [ ] Draft CONTRIBUTING.md once workflow stabilizes
+  [ ] Integrate clang-format/ruff configs and CI hooks
+  [ ] Capture backend design decisions in `docs/backend-notes.md`
+
+[ ] Testing & Samples
+  [ ] Add integration tests compiling C snippets to assembly/golden outputs
+  [ ] Populate `samples/` with programs covering new features

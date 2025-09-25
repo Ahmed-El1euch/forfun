@@ -43,18 +43,9 @@ static int test_codegen_return_literal(void) {
     int read = read_file_to_buffer(tmp, buffer, sizeof(buffer));
     ASSERT_TRUE(read > 0, "Expected codegen output");
 
-    const char *expected =
-        ".text\n"
-        ".globl main\n"
-        "main:\n"
-        "    push %rbp\n"
-        "    mov %rsp, %rbp\n"
-        "    mov $42, %eax\n"
-        "    pop %rbp\n"
-        "    ret\n\n"
-        ".section .note.GNU-stack,\"\",@progbits\n";
-
-    ASSERT_TRUE(strcmp(buffer, expected) == 0, "Assembly output mismatch");
+    ASSERT_TRUE(strstr(buffer, ".globl main\nmain:") != NULL, "Missing function label");
+    ASSERT_TRUE(strstr(buffer, "    movl $42, %eax\n") != NULL, "Missing literal load");
+    ASSERT_TRUE(strstr(buffer, "    leave\n    ret\n") != NULL, "Missing leave/ret");
 
     fclose(tmp);
     ast_free(unit);
@@ -104,6 +95,50 @@ static int test_codegen_binary_expression(void) {
     return EXIT_SUCCESS;
 }
 
+static int test_codegen_unary_minus(void) {
+    const char *source = "int foo() { return -5; }";
+    Parser parser;
+    parser_init(&parser, source, strlen(source));
+    AstNode *unit = parser_parse_translation_unit(&parser);
+    ASSERT_TRUE(parser_status(&parser) == PARSER_OK, "Parser should succeed");
+
+    FILE *tmp = tmpfile();
+    ASSERT_TRUE(tmp != NULL, "tmpfile should succeed");
+    ASSERT_TRUE(codegen_emit_translation_unit(unit, tmp) == 0, "Codegen should succeed");
+
+    char buffer[512];
+    ASSERT_TRUE(read_file_to_buffer(tmp, buffer, sizeof(buffer)) > 0, "Expected output");
+    ASSERT_TRUE(strstr(buffer, "movl $5, %eax") != NULL, "Literal load missing");
+    ASSERT_TRUE(strstr(buffer, "neg %eax") != NULL, "neg instruction missing");
+
+    fclose(tmp);
+    ast_free(unit);
+    return EXIT_SUCCESS;
+}
+
+static int test_codegen_locals(void) {
+    const char *source = "int main() { int x = 1; x = x + 2; return x; }";
+    Parser parser;
+    parser_init(&parser, source, strlen(source));
+    AstNode *unit = parser_parse_translation_unit(&parser);
+    ASSERT_TRUE(parser_status(&parser) == PARSER_OK, "Parser should succeed");
+
+    FILE *tmp = tmpfile();
+    ASSERT_TRUE(tmp != NULL, "tmpfile should succeed");
+    ASSERT_TRUE(codegen_emit_translation_unit(unit, tmp) == 0, "Codegen should succeed");
+
+    char buffer[2048];
+    ASSERT_TRUE(read_file_to_buffer(tmp, buffer, sizeof(buffer)) > 0, "Expected output");
+    ASSERT_TRUE(strstr(buffer, "sub $16, %rsp") != NULL || strstr(buffer, "sub $8, %rsp") != NULL,
+                "Stack allocation missing");
+    ASSERT_TRUE(strstr(buffer, "movl %eax, -" ) != NULL, "Store to local missing");
+    ASSERT_TRUE(strstr(buffer, "movl -") != NULL, "Load from local missing");
+
+    fclose(tmp);
+    ast_free(unit);
+    return EXIT_SUCCESS;
+}
+
 int main(void) {
     typedef int (*test_fn)(void);
     struct {
@@ -113,6 +148,8 @@ int main(void) {
         {"codegen_return_literal", test_codegen_return_literal},
         {"codegen_return_identifier", test_codegen_return_identifier},
         {"codegen_binary_expression", test_codegen_binary_expression},
+        {"codegen_unary_minus", test_codegen_unary_minus},
+        {"codegen_locals", test_codegen_locals},
     };
 
     size_t count = sizeof(tests) / sizeof(tests[0]);

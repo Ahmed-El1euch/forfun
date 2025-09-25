@@ -13,7 +13,11 @@ typedef enum AstNodeKind {
     AST_RETURN_STMT,
     AST_NUMBER_LITERAL,
     AST_IDENTIFIER,
-    AST_BINARY_EXPR
+    AST_UNARY_EXPR,
+    AST_BINARY_EXPR,
+    AST_BLOCK,
+    AST_VAR_DECL,
+    AST_ASSIGNMENT
 } AstNodeKind;
 
 typedef struct AstNode AstNode;
@@ -37,15 +41,40 @@ typedef enum AstBinaryOp {
     AST_BIN_SUB
 } AstBinaryOp;
 
+typedef enum AstUnaryOp {
+    AST_UNARY_PLUS = 0,
+    AST_UNARY_MINUS
+} AstUnaryOp;
+
+typedef struct AstUnaryExpr {
+    AstUnaryOp op;
+    AstNode *operand;
+} AstUnaryExpr;
+
 typedef struct AstBinaryExpr {
     AstBinaryOp op;
     AstNode *left;
     AstNode *right;
 } AstBinaryExpr;
 
+typedef struct AstBlock {
+    AstNode **statements;
+    size_t statement_count;
+} AstBlock;
+
+typedef struct AstVarDecl {
+    AstIdentifier name;
+    AstNode *initializer; /* optional */
+} AstVarDecl;
+
+typedef struct AstAssignment {
+    AstIdentifier target;
+    AstNode *value;
+} AstAssignment;
+
 typedef struct AstFunctionDecl {
     AstIdentifier name;
-    AstNode *body; /* Return statement only for now */
+    AstNode *body; /* AST_BLOCK */
 } AstFunctionDecl;
 
 typedef struct AstTranslationUnit {
@@ -61,7 +90,11 @@ typedef struct AstNode {
         AstReturnStmt return_stmt;
         AstNumberLiteral number_literal;
         AstIdentifier identifier;
+        AstUnaryExpr unary_expr;
         AstBinaryExpr binary_expr;
+        AstBlock block;
+        AstVarDecl var_decl;
+        AstAssignment assignment;
     } value;
 } AstNode;
 

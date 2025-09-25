@@ -4,6 +4,8 @@
 #include "backend/codegen.h"
 #include "frontend/parser.h"
 
+static void dump_block(const AstNode *block, int indent);
+
 static void dump_function(const AstNode *func) {
     if (!func || func->kind != AST_FUNCTION_DECL) {
         puts("<not a function>");
@@ -13,18 +15,74 @@ static void dump_function(const AstNode *func) {
     printf("Function: %.*s\n", (int)func->value.function_decl.name.length, func->value.function_decl.name.name);
 
     const AstNode *body = func->value.function_decl.body;
-    if (!body || body->kind != AST_RETURN_STMT) {
+    if (!body || body->kind != AST_BLOCK) {
         puts("  <body not parsed>");
         return;
     }
 
-    const AstNode *expr = body->value.return_stmt.expression;
-    if (expr && expr->kind == AST_NUMBER_LITERAL) {
-        printf("  return literal: %.*s\n", (int)expr->value.number_literal.length, expr->value.number_literal.lexeme);
-    } else if (expr && expr->kind == AST_IDENTIFIER) {
-        printf("  return identifier: %.*s\n", (int)expr->value.identifier.length, expr->value.identifier.name);
-    } else {
-        puts("  return <unknown>");
+    dump_block(body, 2);
+}
+
+static void dump_expression_summary(const AstNode *expr) {
+    if (!expr) {
+        printf("<empty>");
+        return;
+    }
+
+    switch (expr->kind) {
+    case AST_NUMBER_LITERAL:
+        printf("literal %.*s", (int)expr->value.number_literal.length, expr->value.number_literal.lexeme);
+        break;
+    case AST_IDENTIFIER:
+        printf("identifier %.*s", (int)expr->value.identifier.length, expr->value.identifier.name);
+        break;
+    case AST_UNARY_EXPR:
+        printf("unary %s ", expr->value.unary_expr.op == AST_UNARY_MINUS ? "-" : "+");
+        dump_expression_summary(expr->value.unary_expr.operand);
+        break;
+    case AST_BINARY_EXPR:
+        dump_expression_summary(expr->value.binary_expr.left);
+        printf(" %s ", expr->value.binary_expr.op == AST_BIN_ADD ? "+" : "-");
+        dump_expression_summary(expr->value.binary_expr.right);
+        break;
+    default:
+        printf("<expr>");
+        break;
+    }
+}
+
+static void dump_block(const AstNode *block, int indent) {
+    if (!block || block->kind != AST_BLOCK) {
+        return;
+    }
+
+    for (size_t i = 0; i < block->value.block.statement_count; ++i) {
+        const AstNode *stmt = block->value.block.statements[i];
+        printf("%*s- ", indent, "");
+        switch (stmt->kind) {
+        case AST_VAR_DECL:
+            printf("var %.*s = ", (int)stmt->value.var_decl.name.length, stmt->value.var_decl.name.name);
+            dump_expression_summary(stmt->value.var_decl.initializer);
+            printf("\n");
+            break;
+        case AST_ASSIGNMENT:
+            printf("assign %.*s = ", (int)stmt->value.assignment.target.length, stmt->value.assignment.target.name);
+            dump_expression_summary(stmt->value.assignment.value);
+            printf("\n");
+            break;
+        case AST_RETURN_STMT:
+            printf("return ");
+            dump_expression_summary(stmt->value.return_stmt.expression);
+            printf("\n");
+            break;
+        case AST_BLOCK:
+            printf("block\n");
+            dump_block(stmt, indent + 2);
+            break;
+        default:
+            printf("stmt kind %d\n", stmt->kind);
+            break;
+        }
     }
 }
 

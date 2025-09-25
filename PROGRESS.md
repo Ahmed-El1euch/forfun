@@ -27,3 +27,6 @@ Track each completed step for fungcc so the history of decisions stays transpare
 - Expanded parser to support chained addition/subtraction expressions and ensured AST captures binary nodes.
 - Broadened backend to emit identifier loads and arithmetic sequences; verified via `ctest --test-dir build --output-on-failure` and driver/assembly run.
 - Captured current compiler stages, data structures, and future extensions in `docs/architecture.md`.
+- Expanded `todo.txt` with detailed frontend, backend, tooling, and testing milestones to track upcoming work.
+- Added parser support for parenthesized and unary expressions, plus backend lowering for unary minus; verified via `cmake --build build` and `ctest --test-dir build --output-on-failure`.
+- Enabled block-scoped statements with local declarations/assignments, plus stack-based lowering; validated via `ctest --test-dir build --output-on-failure`.
